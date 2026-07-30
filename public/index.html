@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#8aa58d" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+    <title>一起摸鱼 · 双人桌宠</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="pet-window" id="petWindow">
+      <header class="titlebar">
+        <div class="drag-handle" aria-label="拖动窗口">
+          <span class="brand-dot"></span>
+          <span>一起摸鱼</span>
+          <small>DOUBLE BUDDY</small>
+        </div>
+        <div class="window-actions no-drag">
+          <button class="icon-button active" id="pinButton" title="取消置顶" aria-label="切换置顶">⌁</button>
+          <button class="icon-button" id="snapButton" title="贴到右下角" aria-label="贴到右下角">⌟</button>
+          <button class="icon-button desktop-only" id="minimizeButton" title="最小化" aria-label="最小化">−</button>
+          <button class="icon-button danger" id="closeButton" title="关闭小屋" aria-label="关闭小屋">×</button>
+        </div>
+      </header>
+
+      <section class="scene" id="scene" aria-label="桌宠活动区域">
+        <div class="ambient ambient-one"></div>
+        <div class="ambient ambient-two"></div>
+        <div class="desk-line"></div>
+
+        <div class="speech-bubble hidden" id="speechBubble" role="status">
+          <strong id="speakerName">阿蓝</strong>
+          <span id="speechText">今天也一起摸鱼吧。</span>
+        </div>
+
+        <article class="pet-card pet-left" data-pet-id="lan" tabindex="0" aria-label="阿蓝，点击摸摸头">
+          <div class="pet-aura"></div>
+          <img class="pet-image" src="./assets/left-pet.png" alt="花衬衫和挎包的卡通桌宠阿蓝" draggable="false" />
+          <div class="pet-shadow"></div>
+          <div class="status-chip">
+            <span class="online-dot"></span>
+            <strong data-name-for="lan">阿蓝</strong>
+            <span data-mood-for="lan">心情超好</span>
+          </div>
+        </article>
+
+        <button class="bond-heart no-drag" id="bondHeart" aria-label="查看默契值" title="两人的默契值">
+          <span>♥</span>
+          <strong id="bondValue">72</strong>
+        </button>
+
+        <article class="pet-card pet-right" data-pet-id="bo" tabindex="0" aria-label="小博，点击摸摸头">
+          <div class="pet-aura"></div>
+          <img class="pet-image" src="./assets/right-pet.png" alt="穿毕业袍的卡通桌宠小博" draggable="false" />
+          <div class="pet-shadow"></div>
+          <div class="status-chip">
+            <span class="online-dot"></span>
+            <strong data-name-for="bo">小博</strong>
+            <span data-mood-for="bo">元气满满</span>
+          </div>
+        </article>
+
+        <div class="particle-layer" id="particleLayer" aria-hidden="true"></div>
+      </section>
+
+      <section class="control-dock no-drag" aria-label="桌宠控制面板">
+        <div class="pet-tabs" role="tablist" aria-label="选择桌宠">
+          <button class="pet-tab active" data-select-pet="lan" role="tab" aria-selected="true">
+            <img src="./assets/left-pet.png" alt="" />
+            <span data-name-for="lan">阿蓝</span>
+          </button>
+          <button class="pet-tab" data-select-pet="bo" role="tab" aria-selected="false">
+            <img src="./assets/right-pet.png" alt="" />
+            <span data-name-for="bo">小博</span>
+          </button>
+        </div>
+
+        <div class="needs" id="needs">
+          <div class="need" title="饱腹度">
+            <span class="need-icon">◒</span>
+            <div><small>饱腹</small><i><b id="hungerBar"></b></i></div>
+            <strong id="hungerValue">86</strong>
+          </div>
+          <div class="need" title="心情值">
+            <span class="need-icon">♡</span>
+            <div><small>心情</small><i><b id="moodBar"></b></i></div>
+            <strong id="moodValue">92</strong>
+          </div>
+          <div class="need" title="精力值">
+            <span class="need-icon">ϟ</span>
+            <div><small>精力</small><i><b id="energyBar"></b></i></div>
+            <strong id="energyValue">78</strong>
+          </div>
+        </div>
+
+        <div class="action-grid">
+          <button class="action-button food" data-action="feed"><span>🍙</span><strong>喂食</strong></button>
+          <button class="action-button play" data-action="play"><span>🏐</span><strong>陪玩</strong></button>
+          <button class="action-button talk" data-action="talk"><span>💬</span><strong>聊天</strong></button>
+          <button class="action-button sleep" data-action="sleep"><span>☾</span><strong>休息</strong></button>
+        </div>
+
+        <footer class="dock-footer">
+          <span id="dailyLine">今天已经陪伴 0 分钟</span>
+          <button id="settingsButton">改名字</button>
+        </footer>
+      </section>
+    </main>
+
+    <dialog class="name-dialog" id="nameDialog">
+      <form method="dialog" id="nameForm">
+        <div class="dialog-head">
+          <div><small>DOUBLE BUDDY</small><h2>给他们起个名字</h2></div>
+          <button value="cancel" class="dialog-close" aria-label="关闭">×</button>
+        </div>
+        <label>花衬衫桌宠<input id="lanNameInput" maxlength="8" autocomplete="off" /></label>
+        <label>毕业袍桌宠<input id="boNameInput" maxlength="8" autocomplete="off" /></label>
+        <button class="save-button" value="default">保存名字</button>
+      </form>
+    </dialog>
+
+    <div class="toast hidden" id="toast" role="status"></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

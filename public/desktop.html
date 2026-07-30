@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+    <title>桌面宠物</title>
+    <link rel="stylesheet" href="./desktop.css" />
+  </head>
+  <body>
+    <main class="desktop-pet" id="desktopPet" aria-label="桌面宠物">
+      <div class="speech hidden" id="speech"><strong id="speaker"></strong><span id="speechText"></span></div>
+      <div class="zzz hidden" id="zzz">Z z</div>
+      <div class="pet-hitbox" id="petHitbox">
+        <img id="petImage" alt="" draggable="false" />
+        <div class="floor-shadow"></div>
+        <div class="name-tag"><i></i><strong id="petName"></strong><small id="moodText">心情超好</small></div>
+        <div class="quick-stats" id="quickStats">
+          <span title="饱腹">◒ <b id="hunger">86</b></span>
+          <span title="心情">♡ <b id="mood">92</b></span>
+          <span title="精力">ϟ <b id="energy">78</b></span>
+        </div>
+      </div>
+      <div class="particles" id="particles" aria-hidden="true"></div>
+    </main>
+    <script type="module" src="./desktop.js"></script>
+  </body>
+</html>

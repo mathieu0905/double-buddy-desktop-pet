@@ -1,0 +1,21 @@
+{
+  "name": "double-buddy-desktop-pet",
+  "version": "1.0.0",
+  "private": true,
+  "productName": "一起摸鱼",
+  "description": "A cozy two-character desktop pet built from a personal photo.",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "preview": "node src/server.js",
+    "smoke": "electron scripts/smoke.cjs",
+    "package:mac": "electron-packager . \"一起摸鱼\" --platform=darwin --arch=arm64 --out=release --overwrite --icon=build/icon.icns --ignore=\"^/(sites-web|phd-simulator|phd-simulator-node_modules-dataless-backup-20260728|release|\\.git|\\.runtime)(/|$)\" --ignore=\"\\.tar\\.gz$\" --ignore=\"^/test(/|$)\"",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.0.4",
+    "electron": "^37.2.3"
+  }
+}

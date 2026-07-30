@@ -1,0 +1,20 @@
+node_modules/
+.bin/
+.runtime/
+.playwright-mcp/
+.DS_Store
+npm-debug.log*
+
+# packaged applications are published through GitHub Releases
+release/
+
+# generated icon intermediates
+build/icon.iconset/
+build/icon-base.png
+
+# unrelated legacy projects and archives kept in this workspace
+phd-simulator/
+phd-simulator-node_modules-dataless-backup-20260728/
+phd-simulator-*.tar.gz
+scripts/share.js
+scripts/share-ngrok.js
