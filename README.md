@@ -2,11 +2,18 @@
 
 根据合照制作的多人桌宠。七位角色会像 QQ 宠物一样直接站在桌面底部，而不是待在一个普通应用窗口里。
 
-## 下载
+## 自行构建
 
-前往 [GitHub Releases](https://github.com/mathieu0905/double-buddy-desktop-pet/releases/latest) 下载 `一起摸鱼-mac-arm64.zip`，解压后双击应用即可。
+项目不再提供 GitHub Release 安装包。请安装 Node.js 后克隆仓库并在本机构建：
 
-当前构建适用于 Apple Silicon Mac。首次启动如果被 macOS 拦截，请右键应用并选择“打开”。
+```bash
+git clone https://github.com/mathieu0905/double-buddy-desktop-pet.git
+cd double-buddy-desktop-pet
+npm install
+npm run package:mac
+```
+
+构建产物位于 `release/一起摸鱼-darwin-arm64/一起摸鱼.app`，适用于 Apple Silicon Mac。首次启动如果被 macOS 拦截，请右键应用并选择“打开”。
 
 ## 启动桌宠
 
@@ -15,13 +22,13 @@ npm install
 npm start
 ```
 
-也可以直接双击已经打包好的 macOS 应用：
+构建后也可以直接双击 macOS 应用：
 
 ```text
 release/一起摸鱼-darwin-arm64/一起摸鱼.app
 ```
 
-如果修改了代码，可以用 `npm run package:mac` 重新生成应用。
+修改代码后，可以再次运行 `npm run package:mac` 重新生成应用。
 
 启动后，七位宠物会出现在桌面底部：
 
