@@ -11,7 +11,7 @@
     "dev": "electron .",
     "preview": "node src/server.js",
     "smoke": "electron scripts/smoke.cjs",
-    "package:mac": "electron-packager . \"一起摸鱼\" --platform=darwin --arch=arm64 --out=release --overwrite --icon=build/icon.icns --ignore=\"^/(sites-web|phd-simulator|phd-simulator-node_modules-dataless-backup-20260728|release|\\.git|\\.runtime)(/|$)\" --ignore=\"\\.tar\\.gz$\" --ignore=\"^/test(/|$)\"",
+    "package:mac": "electron-packager . \"一起摸鱼\" --platform=darwin --arch=arm64 --out=release --overwrite --icon=build/icon.icns --ignore=\"^/(sites-web|phd-simulator|phd-simulator-node_modules-dataless-backup-20260728|release|\\.git|\\.runtime|tools|public/assets/3d)(/|$)\" --ignore=\"^/(public/pet-renderer\\.js|src/pet-renderer\\.js)$\" --ignore=\"\\.tar\\.gz$\" --ignore=\"^/test(/|$)\"",
     "test": "node --test test/*.test.js"
   },
   "devDependencies": {

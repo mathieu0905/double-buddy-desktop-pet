@@ -1,4 +1,5 @@
 :root {
+  --pet-scale: 1;
   font-family: "Avenir Next", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
   color: #25312c;
 }
@@ -7,11 +8,15 @@
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; user-select: none; -webkit-user-select: none; }
 body { cursor: default; }
 
-.desktop-pet { width: 100%; height: 100%; position: relative; overflow: hidden; }
+.desktop-pet { width: calc(100% / var(--pet-scale)); height: calc(100% / var(--pet-scale)); position: relative; overflow: hidden; transform: scale(var(--pet-scale)); transform-origin: left top; }
 .pet-hitbox { width: 238px; height: 307px; position: absolute; left: 50%; bottom: 4px; cursor: grab; transform: translateX(-50%); transform-origin: center bottom; }
 .pet-hitbox:active { cursor: grabbing; }
+.pet-hitbox.is-selected::after { content: ""; width: 214px; height: 264px; position: absolute; z-index: 8; left: 50%; bottom: 24px; border: 1px dashed rgba(90, 133, 101, .75); border-radius: 18px; box-shadow: 0 0 0 3px rgba(255,255,255,.45); transform: translateX(-50%); pointer-events: none; }
 .pet-hitbox > img { height: 276px; width: auto; max-width: 228px; position: absolute; z-index: 3; left: 50%; bottom: 25px; object-fit: contain; transform: translateX(-50%); transform-origin: center bottom; filter: drop-shadow(0 13px 7px rgba(30, 48, 38, .2)); pointer-events: none; transition: filter 180ms ease; }
 .pet-hitbox:hover > img { filter: brightness(1.035) drop-shadow(0 15px 8px rgba(30, 48, 38, .22)); }
+.resize-handle { width: 22px; height: 22px; padding: 0; position: absolute; z-index: 11; right: 0; top: 8px; border: 2px solid rgba(255,255,255,.96); border-radius: 50%; display: none; background: #719579; box-shadow: 0 3px 10px rgba(32,55,40,.28); cursor: nesw-resize; touch-action: none; }
+.resize-handle::before { content: "↔"; display: block; color: white; font-size: 12px; font-weight: 800; line-height: 17px; transform: rotate(-45deg); }
+.pet-hitbox.is-selected .resize-handle { display: block; }
 .floor-shadow { width: 105px; height: 14px; position: absolute; z-index: 1; left: 50%; bottom: 24px; border-radius: 50%; background: rgba(28, 46, 36, .22); filter: blur(6px); transform: translateX(-50%); }
 .name-tag { min-width: 139px; height: 31px; padding: 0 11px; position: absolute; z-index: 6; left: 50%; bottom: 4px; border: 1px solid rgba(255,255,255,.94); border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(250,249,244,.9); box-shadow: 0 5px 16px rgba(35,53,42,.17); backdrop-filter: blur(12px); transform: translateX(-50%); white-space: nowrap; }
 .name-tag i { width: 6px; height: 6px; border-radius: 50%; background: #76a77a; box-shadow: 0 0 0 3px rgba(118,167,122,.15); }
@@ -33,15 +38,29 @@ body { cursor: default; }
 .react-bounce { animation: bounce .58s ease; }
 .react-wiggle { animation: wiggle .65s ease; }
 .react-sleep img { animation: breathe 2.4s ease-in-out infinite; filter: saturate(.78) drop-shadow(0 13px 7px rgba(30,48,38,.2)); }
-.walk-left { animation: walkLeft .75s ease; }
-.walk-right { animation: walkRight .75s ease; }
+.motion-walk.direction-left > img { animation: walkLeft var(--motion-duration, 3s) linear; }
+.motion-walk.direction-right > img { animation: walkRight var(--motion-duration, 3s) linear; }
+.motion-run.direction-left > img { animation: runLeft var(--motion-duration, 1.8s) linear; }
+.motion-run.direction-right > img { animation: runRight var(--motion-duration, 1.8s) linear; }
+.motion-dance > img { animation: dance var(--motion-duration, 3.4s) ease-in-out; }
+.motion-jump > img { animation: jump var(--motion-duration, 1.5s) ease-in-out; }
+.motion-walk .floor-shadow, .motion-run .floor-shadow { animation: walkingShadow .3s ease-in-out infinite; }
+.motion-dance .floor-shadow { animation: danceShadow .48s ease-in-out infinite; }
+.motion-jump .floor-shadow { animation: jumpShadow var(--motion-duration, 1.5s) ease-in-out; }
 
 @keyframes bubbleIn { from { opacity: 0; transform: translate(-50%, 8px) scale(.94); } }
 @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 38% { transform: translateX(-50%) translateY(-17px) rotate(-3deg); } 68% { transform: translateX(-50%) translateY(-3px) rotate(2deg); } }
 @keyframes wiggle { 0%,100% { transform: translateX(-50%) rotate(0); } 25% { transform: translateX(-50%) rotate(-5deg); } 50% { transform: translateX(-50%) rotate(5deg); } 75% { transform: translateX(-50%) rotate(-2deg); } }
 @keyframes breathe { 0%,100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.018,.985); } }
-@keyframes walkLeft { 0%,100% { transform: translateX(-50%) rotate(0); } 25% { transform: translateX(-50%) rotate(-3deg) translateY(-4px); } 75% { transform: translateX(-50%) rotate(3deg) translateY(-4px); } }
-@keyframes walkRight { 0%,100% { transform: translateX(-50%) rotate(0); } 25% { transform: translateX(-50%) rotate(3deg) translateY(-4px); } 75% { transform: translateX(-50%) rotate(-3deg) translateY(-4px); } }
+@keyframes walkLeft { 0%,100% { transform: translateX(-50%) translateY(0) rotate(0); } 5%,15%,25%,35%,45%,55%,65%,75%,85%,95% { transform: translateX(-50%) translateY(-7px) rotate(-2.5deg); } 10%,20%,30%,40%,50%,60%,70%,80%,90% { transform: translateX(-50%) translateY(0) rotate(2deg); } }
+@keyframes walkRight { 0%,100% { transform: translateX(-50%) translateY(0) rotate(0); } 5%,15%,25%,35%,45%,55%,65%,75%,85%,95% { transform: translateX(-50%) translateY(-7px) rotate(2.5deg); } 10%,20%,30%,40%,50%,60%,70%,80%,90% { transform: translateX(-50%) translateY(0) rotate(-2deg); } }
+@keyframes runLeft { 0%,100% { transform: translateX(-50%) translateY(0) rotate(-7deg) scaleY(.98); } 6%,18%,30%,42%,54%,66%,78%,90% { transform: translateX(-50%) translateY(-12px) rotate(-10deg) scaleY(1.02); } 12%,24%,36%,48%,60%,72%,84%,96% { transform: translateX(-50%) translateY(0) rotate(-4deg) scaleY(.96); } }
+@keyframes runRight { 0%,100% { transform: translateX(-50%) translateY(0) rotate(7deg) scaleY(.98); } 6%,18%,30%,42%,54%,66%,78%,90% { transform: translateX(-50%) translateY(-12px) rotate(10deg) scaleY(1.02); } 12%,24%,36%,48%,60%,72%,84%,96% { transform: translateX(-50%) translateY(0) rotate(4deg) scaleY(.96); } }
+@keyframes dance { 0%,100% { transform: translateX(-50%) translateY(0) rotate(0) scale(1); } 12% { transform: translateX(-50%) translateY(-13px) rotate(-9deg) scale(1.03,.97); } 25% { transform: translateX(-50%) translateY(0) rotate(8deg); } 38% { transform: translateX(-50%) translateY(-17px) rotate(-6deg) scale(.98,1.03); } 50% { transform: translateX(-50%) translateY(0) rotate(10deg); } 63% { transform: translateX(-50%) translateY(-13px) rotate(-8deg); } 76% { transform: translateX(-50%) translateY(0) rotate(7deg); } 88% { transform: translateX(-50%) translateY(-10px) rotate(-4deg); } }
+@keyframes jump { 0%,100% { transform: translateX(-50%) translateY(0) scale(1); } 12% { transform: translateX(-50%) translateY(7px) scale(1.06,.91); } 38% { transform: translateX(-50%) translateY(-18px) rotate(-3deg) scale(.97,1.04); } 62% { transform: translateX(-50%) translateY(-18px) rotate(3deg) scale(.97,1.04); } 88% { transform: translateX(-50%) translateY(5px) scale(1.05,.92); } }
+@keyframes walkingShadow { 0%,100% { transform: translateX(-50%) scaleX(1); opacity: .9; } 50% { transform: translateX(-50%) scaleX(.78); opacity: .6; } }
+@keyframes danceShadow { 0%,100% { transform: translateX(-50%) scaleX(1); } 50% { transform: translateX(-50%) scaleX(.65); } }
+@keyframes jumpShadow { 0%,100% { transform: translateX(-50%) scaleX(1); opacity: .9; } 50% { transform: translateX(-50%) scaleX(.52); opacity: .38; } }
 @keyframes particleFly { 0% { opacity: 0; transform: translate(0,0) scale(.5); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--x), -78px) scale(1.15) rotate(13deg); } }
 @keyframes zFloat { 0% { opacity: 0; transform: translate(0,8px) scale(.8); } 50% { opacity: 1; } 100% { opacity: 0; transform: translate(11px,-16px) scale(1.12); } }
 
