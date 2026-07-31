@@ -33056,6 +33056,7 @@ function createProceduralRig(model, modelUrl = "") {
       const rootWorld = root.getWorldPosition(new Vector3());
       const target = end.getWorldPosition(new Vector3()).add(new Vector3(side * outward, 0, 0.035));
       poseBranch(branch, target, 0);
+      translateBone(end, side * outward * 0.45, 0.05, 0);
     }
   }
   function rotatePair(branches, x = 0, y = 0, z = 0) {

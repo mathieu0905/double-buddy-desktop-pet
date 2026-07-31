@@ -453,6 +453,7 @@ function createProceduralRig(model, modelUrl = "") {
       const rootWorld = root.getWorldPosition(new THREE.Vector3());
       const target = end.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(side * outward, 0, 0.035));
       poseBranch(branch, target, 0);
+      translateBone(end, side * outward * 0.45, 0.05, 0);
     }
   }
 
