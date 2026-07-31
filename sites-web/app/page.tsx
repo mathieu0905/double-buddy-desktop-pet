@@ -193,9 +193,9 @@ export default function Home() {
         <div className="callout-copy">
           <p className="eyebrow">REAL DESKTOP PET</p>
           <h2>网页是小房间，<br />电脑桌面才是他们的家。</h2>
-          <p>本地桌面版让两只角色直接站在桌面底部：透明背景、保持置顶、可以拖着走，也会自己散步和说话。</p>
+          <p>本地桌面版让两只角色直接站在桌面底部：透明背景、保持置顶、可以拖着走。选中角色就能直接打开快捷栏，喂食、陪玩和互动不用再层层找菜单。</p>
           <div className="feature-list">
-            <span>透明桌面悬浮</span><span>两只独立移动</span><span>右键快捷互动</span><span>自动保存状态</span>
+            <span>透明桌面悬浮</span><span>两只独立移动</span><span>选中即用快捷栏</span><span>自动保存状态</span>
           </div>
           <a className="github-cta" href="https://github.com/mathieu0905/double-buddy-desktop-pet" target="_blank" rel="noreferrer">前往 GitHub 下载与查看源码 <span>↗</span></a>
         </div>
