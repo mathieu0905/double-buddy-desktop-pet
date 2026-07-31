@@ -371,6 +371,22 @@ function createProceduralRig(model) {
   const euler = new THREE.Euler();
   const offset = new THREE.Quaternion();
 
+  // The generated meshes often place both hands directly on the pocket area.
+  // Give each arm a small neutral separation so the hand remains readable
+  // before any interactive action starts.  This edits the actual bone rest
+  // pose; it does not translate the whole model or fake the gesture in 2D.
+  for (const branch of arms) {
+    const side = Math.sign(branchX(branch, world) - world.get(chest).x) || 1;
+    for (const [index, angle] of [[0, 0.48], [1, -0.16], [2, -0.08]]) {
+      const bone = branch[index];
+      const pose = bone && base.get(bone);
+      if (!pose) continue;
+      euler.set(0, 0, side * angle, "XYZ");
+      offset.setFromEuler(euler);
+      pose.quaternion.multiply(offset);
+    }
+  }
+
   function reset() {
     for (const bone of bones) {
       const pose = base.get(bone);
