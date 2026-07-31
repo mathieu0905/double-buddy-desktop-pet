@@ -7,14 +7,16 @@ type Pet = { name: string; hunger: number; mood: number; energy: number };
 type PetDefinition = Pet & { id: PetId; image: string; model: string };
 type State = { selected: PetId; bond: number; pets: Record<PetId, Pet> };
 
+const MODEL_BASE = "https://raw.githubusercontent.com/mathieu0905/double-buddy-desktop-pet/main/public/assets/3d/hunyuan3d21/repaired";
+
 const PETS: PetDefinition[] = [
-  { id: "lan", name: "昂昂", image: "/assets/left-pet.png", model: "/assets/3d/hunyuan3d21/repaired/lan.glb", hunger: 86, mood: 92, energy: 78 },
-  { id: "bo", name: "其其", image: "/assets/right-pet.png", model: "/assets/3d/hunyuan3d21/repaired/bo.glb", hunger: 82, mood: 96, energy: 88 },
-  { id: "grad", name: "11", image: "/assets/grad-pet.png", model: "/assets/3d/hunyuan3d21/repaired/grad.glb", hunger: 88, mood: 90, energy: 84 },
-  { id: "white", name: "🤏✌️", image: "/assets/white-shirt-pet.png", model: "/assets/3d/hunyuan3d21/repaired/white.glb", hunger: 84, mood: 91, energy: 86 },
-  { id: "sunflower", name: "dyson", image: "/assets/left-one-pet.png", model: "/assets/3d/hunyuan3d21/repaired/sunflower.glb", hunger: 90, mood: 96, energy: 82 },
-  { id: "center", name: "xx", image: "/assets/left-two-pet.png", model: "/assets/3d/hunyuan3d21/repaired/center.glb", hunger: 87, mood: 88, energy: 89 },
-  { id: "jumper", name: "男🪣", image: "/assets/right-one-pet.png", model: "/assets/3d/hunyuan3d21/repaired/jumper.glb", hunger: 83, mood: 95, energy: 96 },
+  { id: "lan", name: "昂昂", image: "/assets/left-pet.png", model: `${MODEL_BASE}/lan.glb`, hunger: 86, mood: 92, energy: 78 },
+  { id: "bo", name: "其其", image: "/assets/right-pet.png", model: `${MODEL_BASE}/bo.glb`, hunger: 82, mood: 96, energy: 88 },
+  { id: "grad", name: "11", image: "/assets/grad-pet.png", model: `${MODEL_BASE}/grad.glb`, hunger: 88, mood: 90, energy: 84 },
+  { id: "white", name: "🤏✌️", image: "/assets/white-shirt-pet.png", model: `${MODEL_BASE}/white.glb`, hunger: 84, mood: 91, energy: 86 },
+  { id: "sunflower", name: "dyson", image: "/assets/left-one-pet.png", model: `${MODEL_BASE}/sunflower.glb`, hunger: 90, mood: 96, energy: 82 },
+  { id: "center", name: "xx", image: "/assets/left-two-pet.png", model: `${MODEL_BASE}/center.glb`, hunger: 87, mood: 88, energy: 89 },
+  { id: "jumper", name: "男🪣", image: "/assets/right-one-pet.png", model: `${MODEL_BASE}/jumper.glb`, hunger: 83, mood: 95, energy: 96 },
 ];
 
 const initialState: State = {
