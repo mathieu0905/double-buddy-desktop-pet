@@ -14,7 +14,7 @@ for v in mesh.data.vertices:
     if li is None: continue
     uv=uv_layer[li].uv; x=max(0,min(w-1,int(uv.x*(w-1)))); y=max(0,min(h-1,int((1-uv.y)*(h-1))))
     r,g,b=pixels[y,x,:3]
-    if not (r>0.25 and r>g*1.12 and g>b*1.12): continue
+    if not (r>0.45 and g>0.25 and r-g>0.08 and g-b>0.08): continue
     arm=[(int(mesh.vertex_groups[g.group].name.split('_')[1]),g.weight) for g in v.groups if mesh.vertex_groups[g.group].name.startswith('bone_') and 6<=int(mesh.vertex_groups[g.group].name.split('_')[1])<=19]
     if not arm: continue
     bi,weight=max(arm,key=lambda t:t[1]); inf=min(1.0,weight)**1.3; side=1 if bi<=12 else -1

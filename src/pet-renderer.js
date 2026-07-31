@@ -124,6 +124,8 @@ export function createPetRenderer({ container, modelUrl, rotation = 0, onReady, 
     modelRoot.position.y = baseRootY;
     modelRoot.rotation.set(0, facingRotation + THREE.MathUtils.degToRad(viewRotation), 0);
     modelRoot.scale.setScalar(fitScale);
+    model.updateMatrixWorld(true);
+    rig.separateHands(modelUrl.includes("/white.") ? 0.5 : modelUrl.includes("/lan.") ? 0.28 : 0.1);
     const turn = motionDirection;
 
     if (motion === "walk") {
@@ -442,6 +444,18 @@ function createProceduralRig(model, modelUrl = "") {
     }
   }
 
+  function separateHands(outward = 0.1) {
+    for (const branch of arms) {
+      const root = branch?.[0];
+      const end = branch?.[branch.length - 1];
+      if (!root || !end) continue;
+      const side = Math.sign(branchX(branch, world) - world.get(chest).x) || 1;
+      const rootWorld = root.getWorldPosition(new THREE.Vector3());
+      const target = end.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(side * outward, 0, 0.035));
+      poseBranch(branch, target, 0);
+    }
+  }
+
   function rotatePair(branches, x = 0, y = 0, z = 0) {
     rotateSide(branches?.[0], x, y, z);
     rotateSide(branches?.[1], x, y, -z);
@@ -469,7 +483,8 @@ function createProceduralRig(model, modelUrl = "") {
     bendLimbs,
     handTarget,
     poseBranch,
-    translateBone
+    translateBone,
+    separateHands
   };
 }
 
