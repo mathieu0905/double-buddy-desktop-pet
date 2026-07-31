@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 contextBridge.exposeInMainWorld("desktopPet", {
   isDesktop: true,
@@ -10,12 +10,33 @@ contextBridge.exposeInMainWorld("desktopPet", {
   startDrag: () => ipcRenderer.send("pet:start-drag"),
   stopDrag: () => ipcRenderer.send("pet:stop-drag"),
   showPetMenu: (petId) => ipcRenderer.send("pet:menu", petId),
+  performPetMotion: (action) => ipcRenderer.invoke("pet:perform-motion", String(action)),
+  performPairInteraction: (companionId, action) => ipcRenderer.invoke("pet:perform-pair", String(companionId), String(action)),
   adjustPetScale: (delta) => ipcRenderer.invoke("pet:adjust-scale", Number(delta)),
   setPetScale: (scale) => ipcRenderer.invoke("pet:set-scale", Number(scale)),
+  setPetRotation: (rotation) => ipcRenderer.invoke("pet:set-rotation", Number(rotation)),
+  unfoldPet: () => ipcRenderer.invoke("pet:unfold"),
+  syncRelationships: (relationships) => ipcRenderer.invoke("pet:sync-relationships", relationships),
+  hidePet: () => ipcRenderer.invoke("pet:hide"),
   selectPet: () => ipcRenderer.send("pet:selected"),
   openHub: () => ipcRenderer.send("pet:open-hub"),
+  openCreator: () => ipcRenderer.send("creator:open"),
+  getPetDefinitions: () => ipcRenderer.invoke("pet:get-definitions"),
+  setPetVisible: (petId, visible) => ipcRenderer.invoke("pet:set-visible", String(petId), Boolean(visible)),
+  getCustomPetImage: (petId) => ipcRenderer.invoke("pet:get-custom-image", String(petId)),
+  chooseCreatorImage: () => ipcRenderer.invoke("creator:choose-image"),
+  selectDroppedCreatorImage: (file) => ipcRenderer.invoke("creator:select-dropped-image", webUtils.getPathForFile(file)),
+  getCreatorConfig: () => ipcRenderer.invoke("creator:get-config"),
+  getGenerationJobs: () => ipcRenderer.invoke("creator:get-jobs"),
+  generateCustomPet: (options) => ipcRenderer.invoke("creator:generate", options),
+  onCreatorGenerationFinished: (callback) => ipcRenderer.on("creator:generation-finished", (_event, result) => callback(result)),
+  onGenerationJobs: (callback) => ipcRenderer.on("creator:generation-jobs", (_event, jobs) => callback(jobs)),
+  onPetVisibilityChanged: (callback) => ipcRenderer.on("pet:visibility-changed", (_event, ids) => callback(ids)),
+  onOpenCreator: (callback) => ipcRenderer.on("hub:open-creator", () => callback()),
   onPetAction: (callback) => ipcRenderer.on("pet:action", (_event, action) => callback(action)),
   onPetWander: (callback) => ipcRenderer.on("pet:wander", (_event, direction) => callback(direction)),
   onPetScale: (callback) => ipcRenderer.on("pet:scale", (_event, scale) => callback(scale)),
+  onPetRotation: (callback) => ipcRenderer.on("pet:rotation", (_event, rotation) => callback(rotation)),
+  onPetRelationshipsChanged: (callback) => ipcRenderer.on("pet:relationships-changed", (_event, relationships) => callback(relationships)),
   onPetSelected: (callback) => ipcRenderer.on("pet:selected", (_event, selected) => callback(Boolean(selected)))
 });

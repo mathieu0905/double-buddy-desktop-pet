@@ -7,15 +7,23 @@
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
+    "build:renderer": "esbuild src/pet-renderer.js --bundle --format=esm --platform=browser --outfile=public/pet-renderer.js",
+    "prestart": "npm run build:renderer",
     "start": "electron .",
+    "predev": "npm run build:renderer",
     "dev": "electron .",
     "preview": "node src/server.js",
     "smoke": "electron scripts/smoke.cjs",
-    "package:mac": "electron-packager . \"一起摸鱼\" --platform=darwin --arch=arm64 --out=release --overwrite --icon=build/icon.icns --ignore=\"^/(sites-web|phd-simulator|phd-simulator-node_modules-dataless-backup-20260728|release|\\.git|\\.runtime|tools|public/assets/3d)(/|$)\" --ignore=\"^/(public/pet-renderer\\.js|src/pet-renderer\\.js)$\" --ignore=\"\\.tar\\.gz$\" --ignore=\"^/test(/|$)\"",
+    "prepackage:mac": "npm run build:renderer",
+    "package:mac": "node scripts/package-mac.cjs",
     "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@electron/packager": "^20.0.4",
-    "electron": "^37.2.3"
+    "electron": "^37.2.3",
+    "esbuild": "^0.28.1"
   }
 }

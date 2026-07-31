@@ -1,3 +1,5 @@
+import { createPetRenderer } from "./pet-renderer.js";
+
 const params = new URLSearchParams(location.search);
 const petId = params.get("pet") || "lan";
 const desktop = window.desktopPet;
@@ -6,9 +8,12 @@ const MAX_SCALE = 1.6;
 const STORAGE_KEY = "double-buddy.pet-state.v1";
 const EXTRA_STORAGE_KEY = "double-buddy.extra-pet-state.v1";
 const HUB_PET_IDS = new Set(["lan", "bo"]);
+const FALLBACK_IMAGES = { lan: "./assets/left-pet.png", bo: "./assets/right-pet.png" };
 const config = {
   name: params.get("name") || (petId === "bo" ? "其其" : "昂昂"),
-  image: params.get("image") || (petId === "bo" ? "./assets/right-pet.png" : "./assets/left-pet.png"),
+  image: params.get("image") || FALLBACK_IMAGES[petId] || "",
+  model: params.get("model") || "",
+  rotation: numberParam("rotation", 0),
   hunger: numberParam("hunger", petId === "bo" ? 82 : 86),
   mood: numberParam("mood", petId === "bo" ? 96 : 92),
   energy: numberParam("energy", petId === "bo" ? 88 : 78)
@@ -20,7 +25,8 @@ const linesByPet = {
     feed: ["这个饭团很有眼光。", "吃饱了，才有力气摸鱼。"],
     play: ["球来了——接住！", "下一局我可认真了。"],
     talk: ["我在听，你慢慢说。", "今天也辛苦啦。"],
-    sleep: ["那我眯五分钟……", "呼——先暂停营业。"],
+  sleep: ["那我眯五分钟……", "呼——先暂停营业。"],
+  "pull-out": ["终于把手从兜里拿出来了。", "活动一下手腕。"],
     idle: ["今天也一起摸鱼吧。", "忙完记得起来走一走。", "其其怎么又这么精神？"]
   },
   bo: {
@@ -28,7 +34,8 @@ const linesByPet = {
     feed: ["饭团满分，我宣布的。", "毕业之后也要好好吃饭！"],
     play: ["这一球我可不会让！", "来来来，决胜局！"],
     talk: ["讲吧，我保证认真听。", "先笑一个，办法总会有的。"],
-    sleep: ["只睡五分钟，真的。", "毕业袍可以当小被子。"],
+  sleep: ["只睡五分钟，真的。", "毕业袍可以当小被子。"],
+  "pull-out": ["兜里没有第二个我。", "拿出来活动一下。"],
     idle: ["今天有什么新任务？", "毕业快乐是永久状态！", "累了就歇一会儿吧。"]
   }
 };
@@ -39,6 +46,7 @@ const lines = linesByPet[petId] || {
   play: ["来活动一下！", "下一局继续！"],
   talk: ["我在听呢。", "今天也一起加油。"],
   sleep: ["那我休息一会儿。", "晚安，待会见。"],
+  "pull-out": ["手手出兜，活动一下。", "终于拿出来啦。"],
   idle: ["今天也一起摸鱼吧。", "需要我的时候叫我。", "大家都在，真热闹。"]
 };
 
@@ -47,13 +55,22 @@ const effects = {
   feed: { hunger: 18, mood: 3, energy: 1, bond: 1 },
   play: { hunger: -6, mood: 15, energy: -10, bond: 3 },
   talk: { hunger: -1, mood: 9, energy: -1, bond: 2 },
-  sleep: { hunger: -2, mood: 2, energy: 20, bond: 1 }
+  sleep: { hunger: -2, mood: 2, energy: 20, bond: 1 },
+  "pull-out": { hunger: 0, mood: 4, energy: -1, bond: 1 }
 };
 
 const ui = {
   root: document.querySelector("#desktopPet"),
   hitbox: document.querySelector("#petHitbox"),
+  hideHandle: document.querySelector("#hideHandle"),
   resizeHandle: document.querySelector("#resizeHandle"),
+  rotateHandle: document.querySelector("#rotateHandle"),
+  quickActions: document.querySelector("#quickActions"),
+  quickPanel: document.querySelector("#quickPanel"),
+  quickPanelTitle: document.querySelector("#quickPanelTitle"),
+  quickPanelGrid: document.querySelector("#quickPanelGrid"),
+  closeQuickPanel: document.querySelector("#closeQuickPanel"),
+  model: document.querySelector("#petModel"),
   image: document.querySelector("#petImage"),
   name: document.querySelector("#petName"),
   moodText: document.querySelector("#moodText"),
@@ -74,20 +91,45 @@ let speechTimer;
 let autonomousMotionTimer;
 let wheelDelta = 0;
 let currentScale = 1;
+let currentRotation = normalizeRotation(config.rotation);
 let resizeSession = null;
+let rotationSession = null;
+let modelRenderer = null;
+let imageHitCanvas = null;
+let imageHitContext = null;
+let pointerOverPet = false;
+let mouseIgnored = true;
 
 applyScale(params.get("scale"));
+applyRotation(currentRotation);
 
-ui.image.src = config.image;
+ui.image.addEventListener("load", prepareImageHitMap);
+if (config.image) ui.image.src = config.image;
+else desktop?.getCustomPetImage?.(petId).then((source) => {
+  if (source) ui.image.src = source;
+});
+if (config.model) {
+  ui.hitbox.classList.add("has-model");
+  modelRenderer = createPetRenderer({
+    container: ui.model,
+    modelUrl: config.model,
+    rotation: currentRotation,
+    onReady: () => ui.hitbox.classList.add("model-ready"),
+    onError: (error) => {
+      console.error("Unable to load pet model", error);
+      modelRenderer?.destroy();
+      modelRenderer = null;
+    }
+  });
+}
 ui.image.alt = `${state.name}桌面宠物`;
 ui.name.textContent = state.name;
 ui.speaker.textContent = state.name;
 render();
 
-ui.hitbox.addEventListener("pointerenter", () => desktop?.setIgnoreMouse?.(false));
-ui.hitbox.addEventListener("pointerleave", () => { if (!pressedAt) desktop?.setIgnoreMouse?.(true); });
+window.addEventListener("mousemove", updatePointerPassThrough);
 ui.hitbox.addEventListener("pointerdown", (event) => {
-  if (event.button !== 0) return;
+  if (event.button !== 0 || !isPointOnPet(event.clientX, event.clientY)) return;
   selectPet();
   stopAutonomousMotion();
   pressedAt = { x: event.screenX, y: event.screenY, time: Date.now() };
@@ -103,13 +145,17 @@ ui.hitbox.addEventListener("pointerup", (event) => {
   if (moved < 7 && Date.now() - press.time < 420) interact("pet");
 });
 ui.hitbox.addEventListener("pointercancel", () => { pressedAt = null; desktop?.stopDrag?.(); });
-ui.hitbox.addEventListener("dblclick", () => desktop?.openHub?.());
+ui.hitbox.addEventListener("dblclick", (event) => {
+  if (isPointOnPet(event.clientX, event.clientY)) desktop?.openHub?.();
+});
 ui.hitbox.addEventListener("contextmenu", (event) => {
+  if (!isPointOnPet(event.clientX, event.clientY)) return;
   event.preventDefault();
   desktop?.stopDrag?.();
   desktop?.showPetMenu?.(petId);
 });
 ui.hitbox.addEventListener("wheel", (event) => {
+  if (!isPointOnPet(event.clientX, event.clientY)) return;
   event.preventDefault();
   selectPet();
   wheelDelta += event.deltaY;
@@ -117,6 +163,16 @@ ui.hitbox.addEventListener("wheel", (event) => {
   desktop?.adjustPetScale?.(wheelDelta < 0 ? 0.1 : -0.1);
   wheelDelta = 0;
 }, { passive: false });
+ui.hideHandle.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+});
+ui.hideHandle.addEventListener("click", async (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  const hidden = await desktop?.hidePet?.();
+  if (!hidden) showNotice("至少需要保留一个角色");
+});
 ui.resizeHandle.addEventListener("pointerdown", (event) => {
   if (event.button !== 0) return;
   event.preventDefault();
@@ -139,28 +195,99 @@ ui.resizeHandle.addEventListener("pointermove", (event) => {
 });
 ui.resizeHandle.addEventListener("pointerup", finishResize);
 ui.resizeHandle.addEventListener("pointercancel", finishResize);
+ui.rotateHandle.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  event.stopPropagation();
+  selectPet();
+  stopAutonomousMotion();
+  rotationSession = { pointerId: event.pointerId, x: event.screenX, rotation: currentRotation, lastRotation: currentRotation };
+  ui.rotateHandle.setPointerCapture?.(event.pointerId);
+  desktop?.setIgnoreMouse?.(false);
+});
+ui.rotateHandle.addEventListener("pointermove", (event) => {
+  if (!rotationSession || rotationSession.pointerId !== event.pointerId) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const rotation = normalizeRotation(rotationSession.rotation + (event.screenX - rotationSession.x) * 0.8);
+  if (Math.abs(rotation - rotationSession.lastRotation) < 0.1) return;
+  rotationSession.lastRotation = rotation;
+  desktop?.setPetRotation?.(rotation);
+});
+ui.rotateHandle.addEventListener("pointerup", finishRotation);
+ui.rotateHandle.addEventListener("pointercancel", finishRotation);
+ui.quickActions.addEventListener("pointerdown", stopControlPointerEvent);
+ui.quickActions.addEventListener("click", (event) => {
+  const actionButton = event.target.closest("[data-pet-action]");
+  if (actionButton) {
+    hideQuickControls();
+    interact(actionButton.dataset.petAction);
+    return;
+  }
+  const panelButton = event.target.closest("[data-quick-panel]");
+  if (panelButton) openQuickPanel(panelButton.dataset.quickPanel);
+});
+ui.quickPanel.addEventListener("pointerdown", stopControlPointerEvent);
+ui.quickPanel.addEventListener("click", async (event) => {
+  const motionButton = event.target.closest("[data-pet-motion]");
+  if (motionButton) {
+    hideQuickControls();
+    await desktop?.performPetMotion?.(motionButton.dataset.petMotion);
+    return;
+  }
+  const pairButton = event.target.closest("[data-pair-action]");
+  if (pairButton) {
+    await openPartnerPicker(pairButton.dataset.pairAction, pairButton.dataset.actionLabel);
+    return;
+  }
+  const partnerButton = event.target.closest("[data-partner-id]");
+  if (partnerButton) {
+    hideQuickControls();
+    await desktop?.performPairInteraction?.(partnerButton.dataset.partnerId, partnerButton.dataset.pairWith);
+  }
+});
+ui.closeQuickPanel.addEventListener("click", closeQuickPanel);
 document.body.addEventListener("pointerdown", (event) => {
   if (!ui.hitbox.contains(event.target)) deselectPet();
 });
-document.body.addEventListener("mouseleave", () => { if (!pressedAt && !resizeSession) desktop?.setIgnoreMouse?.(true); });
+document.body.addEventListener("mouseleave", () => {
+  pointerOverPet = false;
+  if (!pressedAt && !resizeSession && !rotationSession) setMouseIgnored(true);
+});
 window.addEventListener("blur", deselectPet);
 
-desktop?.onPetAction?.((action) => interact(action));
+desktop?.onPetAction?.((action) => {
+  hideQuickControls();
+  interact(action);
+});
 desktop?.onPetWander?.((detail) => {
+  hideQuickControls();
   const direction = typeof detail === "number" ? detail : detail?.direction;
   const duration = typeof detail === "object" ? detail.duration : 850;
   const action = typeof detail === "object" ? detail.action || "walk" : "walk";
   stopAutonomousMotion();
+  modelRenderer?.play(action, { direction });
   void ui.hitbox.offsetWidth;
   ui.hitbox.style.setProperty("--motion-duration", `${duration}ms`);
   ui.hitbox.classList.add(`motion-${action}`, direction < 0 ? "direction-left" : "direction-right");
   if (action === "dance") spawnParticles(["♪", "♫", "✦"]);
   if (action === "jump") spawnParticles(["✦", "·", "✧"]);
+  if (action === "stretch") spawnParticles(["☼", "✦", "·"]);
+  if (action === "wave") spawnParticles(["👋", "✦", "·"]);
+  if (action === "pull-out") spawnParticles(["✋", "✦", "·"]);
+  if (action === "kiss") spawnParticles(["♥", "♡", "💕"]);
+  if (action === "hug") spawnParticles(["🫂", "♡", "♥"]);
+  if (action === "fight") spawnParticles(["💥", "⚡", "✦"]);
   autonomousMotionTimer = window.setTimeout(stopAutonomousMotion, duration);
 });
 desktop?.onPetScale?.((scale) => {
   applyScale(scale);
   showScaleFeedback(scale);
+});
+desktop?.onPetRotation?.((rotation) => {
+  currentRotation = applyRotation(rotation);
+  modelRenderer?.setRotation(currentRotation);
+  showRotationFeedback(currentRotation);
 });
 desktop?.onPetSelected?.((selected) => {
   ui.hitbox.classList.toggle("is-selected", selected);
@@ -205,7 +332,8 @@ function interact(action) {
 
 function stopAutonomousMotion() {
   clearTimeout(autonomousMotionTimer);
-  ui.hitbox.classList.remove("motion-walk", "motion-run", "motion-dance", "motion-jump", "direction-left", "direction-right");
+  ui.hitbox.classList.remove("motion-walk", "motion-run", "motion-dance", "motion-jump", "motion-stretch", "motion-wave", "motion-kiss", "motion-hug", "motion-fight", "motion-sleep", "direction-left", "direction-right");
+  modelRenderer?.play("idle");
 }
 
 function applyScale(value) {
@@ -216,14 +344,150 @@ function applyScale(value) {
   return scale;
 }
 
+function applyRotation(value) {
+  const rotation = normalizeRotation(value);
+  currentRotation = rotation;
+  // 3D pets turn around their model axis; image pets rotate in the desktop plane.
+  ui.image.style.rotate = `${rotation}deg`;
+  return rotation;
+}
+
+function prepareImageHitMap() {
+  if (!ui.image.naturalWidth || !ui.image.naturalHeight) return;
+  const scale = Math.min(1, 512 / Math.max(ui.image.naturalWidth, ui.image.naturalHeight));
+  imageHitCanvas = document.createElement("canvas");
+  imageHitCanvas.width = Math.max(1, Math.round(ui.image.naturalWidth * scale));
+  imageHitCanvas.height = Math.max(1, Math.round(ui.image.naturalHeight * scale));
+  imageHitContext = imageHitCanvas.getContext("2d", { willReadFrequently: true });
+  try {
+    imageHitContext.drawImage(ui.image, 0, 0, imageHitCanvas.width, imageHitCanvas.height);
+  } catch {
+    imageHitCanvas = null;
+    imageHitContext = null;
+  }
+}
+
+function isPointOnPet(clientX, clientY) {
+  if (modelRenderer && ui.hitbox.classList.contains("model-ready")) {
+    const rect = ui.model.getBoundingClientRect();
+    return modelRenderer.hitTest(clientX - rect.left, clientY - rect.top);
+  }
+  const rect = ui.image.getBoundingClientRect();
+  const width = ui.image.offsetWidth;
+  const height = ui.image.offsetHeight;
+  if (!width || !height) return false;
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const angle = -currentRotation * Math.PI / 180;
+  const dx = clientX - centerX;
+  const dy = clientY - centerY;
+  const localX = Math.cos(angle) * dx - Math.sin(angle) * dy + width / 2;
+  const localY = Math.sin(angle) * dx + Math.cos(angle) * dy + height / 2;
+  if (localX < 0 || localY < 0 || localX >= width || localY >= height) return false;
+  if (!imageHitContext || !imageHitCanvas) {
+    const nx = (localX / width - 0.5) / 0.48;
+    const ny = (localY / height - 0.5) / 0.5;
+    return nx * nx + ny * ny <= 1;
+  }
+  try {
+    const x = Math.min(imageHitCanvas.width - 1, Math.floor(localX / width * imageHitCanvas.width));
+    const y = Math.min(imageHitCanvas.height - 1, Math.floor(localY / height * imageHitCanvas.height));
+    return imageHitContext.getImageData(x, y, 1, 1).data[3] >= 28;
+  } catch {
+    return true;
+  }
+}
+
+function isPointOnVisibleControl(clientX, clientY) {
+  if (!ui.hitbox.classList.contains("is-selected")) return false;
+  return [ui.hideHandle, ui.resizeHandle, ui.rotateHandle, ui.quickActions, ui.quickPanel].some((control) => {
+    if (getComputedStyle(control).display === "none") return false;
+    const rect = control.getBoundingClientRect();
+    return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+  });
+}
+
+function updatePointerPassThrough(event) {
+  if (pressedAt || resizeSession || rotationSession) return setMouseIgnored(false);
+  const onPet = isPointOnPet(event.clientX, event.clientY);
+  const interactive = onPet || isPointOnVisibleControl(event.clientX, event.clientY);
+  setMouseIgnored(!interactive);
+  if (onPet && !pointerOverPet) desktop?.unfoldPet?.();
+  pointerOverPet = onPet;
+}
+
+function setMouseIgnored(ignored) {
+  if (mouseIgnored === ignored) return;
+  mouseIgnored = ignored;
+  desktop?.setIgnoreMouse?.(ignored);
+}
+
 function selectPet() {
   ui.hitbox.classList.add("is-selected");
   desktop?.selectPet?.();
 }
 
 function deselectPet() {
-  if (resizeSession) return;
+  if (resizeSession || rotationSession) return;
+  hideQuickControls();
+}
+
+function hideQuickControls() {
   ui.hitbox.classList.remove("is-selected");
+  closeQuickPanel();
+}
+
+function stopControlPointerEvent(event) {
+  event.stopPropagation();
+}
+
+function openQuickPanel(kind) {
+  selectPet();
+  ui.quickPanel.classList.add("is-open");
+  ui.quickPanelTitle.textContent = kind === "pair" ? "双人互动" : "动作";
+  if (kind === "pair") {
+    ui.quickPanelGrid.innerHTML = [
+      ["kiss", "亲一下", "♥"],
+      ["hug", "抱一下", "🫂"],
+      ["fight", "打架", "💥"],
+      ["sleep", "一起躺平", "☾"]
+    ].map(([action, label, icon]) => `<button type="button" data-pair-action="${action}" data-action-label="${label}"><span>${icon}</span>${label}</button>`).join("");
+    return;
+  }
+  ui.quickPanelGrid.innerHTML = [
+    ["walk", "走一走", "↝"],
+    ["run", "跑一圈", "»"],
+    ["dance", "跳个舞", "♪"],
+    ["jump", "跳起来", "↑"],
+    ["stretch", "伸懒腰", "☼"],
+    ["wave", "挥挥手", "👋"],
+    ["pull-out", "手出兜", "✋"]
+  ].map(([action, label, icon]) => `<button type="button" data-pet-motion="${action}"><span>${icon}</span>${label}</button>`).join("");
+}
+
+async function openPartnerPicker(action, actionLabel) {
+  const definitions = await desktop?.getPetDefinitions?.() || [];
+  const partners = definitions.filter((pet) => pet.id !== petId && pet.visible);
+  ui.quickPanelTitle.textContent = `${actionLabel} · 选择角色`;
+  if (!partners.length) {
+    ui.quickPanelGrid.innerHTML = '<p class="quick-panel-empty">先在桌宠小屋显示另一个角色</p>';
+    return;
+  }
+  ui.quickPanelGrid.innerHTML = partners.map((pet) => (
+    `<button type="button" data-partner-id="${escapeAttribute(pet.id)}" data-pair-with="${action}"><span>♡</span>${escapeHtml(pet.name)}</button>`
+  )).join("");
+}
+
+function closeQuickPanel() {
+  ui.quickPanel.classList.remove("is-open");
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value);
 }
 
 function finishResize(event) {
@@ -231,6 +495,14 @@ function finishResize(event) {
   event.preventDefault();
   event.stopPropagation();
   resizeSession = null;
+  desktop?.setIgnoreMouse?.(true);
+}
+
+function finishRotation(event) {
+  if (!rotationSession || rotationSession.pointerId !== event.pointerId) return;
+  event.preventDefault();
+  event.stopPropagation();
+  rotationSession = null;
   desktop?.setIgnoreMouse?.(true);
 }
 
@@ -243,13 +515,31 @@ function showScaleFeedback(value) {
   speechTimer = window.setTimeout(() => ui.speech.classList.add("hidden"), 1_800);
 }
 
+function showRotationFeedback(value) {
+  const rotation = normalizeRotation(value);
+  ui.speaker.textContent = state.name;
+  ui.speechText.textContent = Math.abs(rotation) < 0.1 ? "已经转回正面" : `当前视角 ${Math.round(rotation)}°`;
+  ui.speech.classList.remove("hidden");
+  clearTimeout(speechTimer);
+  speechTimer = window.setTimeout(() => ui.speech.classList.add("hidden"), 1_500);
+}
+
+function showNotice(message) {
+  ui.speaker.textContent = state.name;
+  ui.speechText.textContent = message;
+  ui.speech.classList.remove("hidden");
+  clearTimeout(speechTimer);
+  speechTimer = window.setTimeout(() => ui.speech.classList.add("hidden"), 2_200);
+}
+
 function react(action) {
   ui.hitbox.classList.remove("react-bounce", "react-wiggle", "react-sleep");
   void ui.hitbox.offsetWidth;
   const className = action === "play" ? "react-wiggle" : action === "sleep" ? "react-sleep" : "react-bounce";
+  modelRenderer?.play(action === "play" ? "dance" : action === "sleep" ? "sleep" : action === "talk" ? "wave" : action === "pull-out" ? "pullOut" : "idle");
   ui.hitbox.classList.add(className);
   ui.zzz.classList.toggle("hidden", action !== "sleep");
-  const symbols = action === "feed" ? ["🍙", "♡", "✦"] : action === "play" ? ["🏐", "✦", "·"] : action === "sleep" ? ["☾", "z", "✦"] : ["♥", "♡", "✦"];
+  const symbols = action === "feed" ? ["🍙", "♡", "✦"] : action === "play" ? ["🏐", "✦", "·"] : action === "sleep" ? ["☾", "z", "✦"] : action === "pull-out" ? ["✋", "✦", "·"] : ["♥", "♡", "✦"];
   spawnParticles(symbols);
   window.setTimeout(() => {
     ui.hitbox.classList.remove(className);
@@ -330,6 +620,12 @@ function saveState() {
 
 function clamp(value) {
   return Math.min(100, Math.max(0, value));
+}
+
+function normalizeRotation(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return ((numeric + 180) % 360 + 360) % 360 - 180;
 }
 
 function numberParam(name, fallback) {

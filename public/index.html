@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#8aa58d" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
-    <title>一起摸鱼 · 双人桌宠</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+    <title>一起摸鱼 · 桌宠小屋</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -30,51 +30,22 @@
         <div class="desk-line"></div>
 
         <div class="speech-bubble hidden" id="speechBubble" role="status">
-          <strong id="speakerName">阿蓝</strong>
+          <strong id="speakerName">昂昂</strong>
           <span id="speechText">今天也一起摸鱼吧。</span>
         </div>
 
-        <article class="pet-card pet-left" data-pet-id="lan" tabindex="0" aria-label="阿蓝，点击摸摸头">
-          <div class="pet-aura"></div>
-          <img class="pet-image" src="./assets/left-pet.png" alt="花衬衫和挎包的卡通桌宠阿蓝" draggable="false" />
-          <div class="pet-shadow"></div>
-          <div class="status-chip">
-            <span class="online-dot"></span>
-            <strong data-name-for="lan">阿蓝</strong>
-            <span data-mood-for="lan">心情超好</span>
-          </div>
-        </article>
+        <div class="pet-roster" id="petRoster" aria-label="全部桌宠角色"></div>
 
         <button class="bond-heart no-drag" id="bondHeart" aria-label="查看默契值" title="两人的默契值">
           <span>♥</span>
           <strong id="bondValue">72</strong>
         </button>
 
-        <article class="pet-card pet-right" data-pet-id="bo" tabindex="0" aria-label="小博，点击摸摸头">
-          <div class="pet-aura"></div>
-          <img class="pet-image" src="./assets/right-pet.png" alt="穿毕业袍的卡通桌宠小博" draggable="false" />
-          <div class="pet-shadow"></div>
-          <div class="status-chip">
-            <span class="online-dot"></span>
-            <strong data-name-for="bo">小博</strong>
-            <span data-mood-for="bo">元气满满</span>
-          </div>
-        </article>
-
         <div class="particle-layer" id="particleLayer" aria-hidden="true"></div>
       </section>
 
       <section class="control-dock no-drag" aria-label="桌宠控制面板">
-        <div class="pet-tabs" role="tablist" aria-label="选择桌宠">
-          <button class="pet-tab active" data-select-pet="lan" role="tab" aria-selected="true">
-            <img src="./assets/left-pet.png" alt="" />
-            <span data-name-for="lan">阿蓝</span>
-          </button>
-          <button class="pet-tab" data-select-pet="bo" role="tab" aria-selected="false">
-            <img src="./assets/right-pet.png" alt="" />
-            <span data-name-for="bo">小博</span>
-          </button>
-        </div>
+        <div class="pet-tabs" id="petTabs" role="tablist" aria-label="选择桌宠"></div>
 
         <div class="needs" id="needs">
           <div class="need" title="饱腹度">
@@ -99,24 +70,123 @@
           <button class="action-button play" data-action="play"><span>🏐</span><strong>陪玩</strong></button>
           <button class="action-button talk" data-action="talk"><span>💬</span><strong>聊天</strong></button>
           <button class="action-button sleep" data-action="sleep"><span>☾</span><strong>休息</strong></button>
+          <button class="action-button pull-out" data-action="pullOut"><span>✋</span><strong>掏兜</strong></button>
         </div>
 
         <footer class="dock-footer">
           <span id="dailyLine">今天已经陪伴 0 分钟</span>
-          <button id="settingsButton">改名字</button>
+          <div class="footer-actions">
+            <button id="generationTasksButton">生成任务 <b class="task-badge hidden" id="generationTaskBadge">0</b></button>
+            <button id="createPetButton">＋ 照片角色</button>
+            <button id="settingsButton">改名字</button>
+          </div>
         </footer>
       </section>
     </main>
 
+    <dialog class="pet-detail-dialog" id="petDetailDialog">
+      <div class="pet-detail-shell">
+        <header class="pet-detail-head">
+          <div><small>CHARACTER PROFILE</small><h2 id="petDetailName">角色档案</h2></div>
+          <button class="dialog-close" id="closePetDetailButton" type="button" aria-label="关闭">×</button>
+        </header>
+
+        <section class="pet-detail-overview">
+          <div class="pet-detail-portrait" id="petDetailPortrait">
+            <div class="pet-detail-model" id="petDetailModel" aria-hidden="true"></div>
+            <img id="petDetailImage" alt="" />
+            <span class="pet-detail-rotate-hint">↻ 拖动旋转</span>
+          </div>
+          <div class="pet-detail-summary">
+            <span class="pet-detail-presence" id="petDetailPresence"></span>
+            <p id="petDetailMood"></p>
+            <div class="pet-detail-needs">
+              <div><span>饱腹</span><i><b id="petDetailHungerBar"></b></i><strong id="petDetailHungerValue"></strong></div>
+              <div><span>心情</span><i><b id="petDetailMoodBar"></b></i><strong id="petDetailMoodValue"></strong></div>
+              <div><span>精力</span><i><b id="petDetailEnergyBar"></b></i><strong id="petDetailEnergyValue"></strong></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="pet-detail-section">
+          <div class="pet-detail-section-head"><h3>人物关系</h3><small>点击伙伴可切换档案</small></div>
+          <div class="relationship-list" id="relationshipList"></div>
+        </section>
+
+        <section class="pet-detail-section">
+          <div class="pet-detail-section-head"><h3>互动动作</h3><small>动作会立即影响角色状态</small></div>
+          <div class="pet-detail-actions">
+            <button type="button" data-detail-action="pet"><span>♥</span>摸摸</button>
+            <button type="button" data-detail-action="feed"><span>🍙</span>喂食</button>
+            <button type="button" data-detail-action="play"><span>🏐</span>陪玩</button>
+            <button type="button" data-detail-action="talk"><span>💬</span>聊天</button>
+            <button type="button" data-detail-action="sleep"><span>☾</span>休息</button>
+            <button type="button" data-detail-action="pullOut"><span>✋</span>掏兜</button>
+          </div>
+        </section>
+      </div>
+    </dialog>
+
     <dialog class="name-dialog" id="nameDialog">
       <form method="dialog" id="nameForm">
         <div class="dialog-head">
-          <div><small>DOUBLE BUDDY</small><h2>给他们起个名字</h2></div>
+          <div><small>PET HOUSE</small><h2>给角色们起名字</h2></div>
           <button value="cancel" class="dialog-close" aria-label="关闭">×</button>
         </div>
-        <label>花衬衫桌宠<input id="lanNameInput" maxlength="8" autocomplete="off" /></label>
-        <label>毕业袍桌宠<input id="boNameInput" maxlength="8" autocomplete="off" /></label>
+        <div class="name-fields" id="nameFields"></div>
         <button class="save-button" value="default">保存名字</button>
+      </form>
+    </dialog>
+
+    <dialog class="generation-tasks-dialog" id="generationTasksDialog">
+      <div class="generation-tasks-head">
+        <div><small>BACKGROUND JOBS</small><h2>后台生成任务</h2></div>
+        <button class="dialog-close" id="closeGenerationTasksButton" type="button" aria-label="关闭">×</button>
+      </div>
+      <div class="generation-task-list" id="generationTaskList"></div>
+      <p class="generation-task-empty" id="generationTaskEmpty">还没有生成任务</p>
+    </dialog>
+
+    <dialog class="creator-dialog" id="creatorDialog">
+      <form id="creatorForm">
+        <div class="dialog-head creator-head">
+          <div><small>PET MAKER</small><h2>添加自己的桌宠</h2></div>
+          <button class="dialog-close" id="closeCreatorButton" type="button" aria-label="关闭">×</button>
+        </div>
+
+        <section class="creator-drop-zone" id="creatorDropZone">
+          <span class="creator-step">01</span>
+          <div>
+            <h3>选择图片</h3>
+            <p>可以拖入人物照片交给 AI 生成，也可以直接拖入已经做好的 Q 版角色图。</p>
+            <button class="creator-choose" id="chooseCreatorImageButton" type="button">选择图片</button>
+            <strong id="creatorFileName">尚未选择</strong>
+          </div>
+        </section>
+
+        <section class="creator-section">
+          <span class="creator-step">02</span>
+          <div class="creator-field-content">
+            <h3>角色与生成方式</h3>
+            <label>角色名字<input id="creatorPetName" maxlength="20" placeholder="例如：小林" required /></label>
+            <div class="creator-providers">
+              <label><input type="radio" name="creatorProvider" value="direct" /><span><b>直接导入 Q 图</b><small>原图直接成为桌宠</small></span></label>
+              <label><input type="radio" name="creatorProvider" value="codex" checked /><span><b>本机 Codex</b><small>复用 codex login</small></span></label>
+              <label><input type="radio" name="creatorProvider" value="api" /><span><b>兼容 API</b><small>自定义接口与模型</small></span></label>
+            </div>
+            <p class="creator-availability" id="creatorCodexAvailability"></p>
+            <div class="creator-api-fields hidden" id="creatorApiFields">
+              <label>API Base<input id="creatorApiBase" type="url" placeholder="https://api.openai.com/v1" /></label>
+              <label>API Key<input id="creatorApiKey" type="password" autocomplete="off" placeholder="sk-…" /></label>
+              <label>Model<input id="creatorModel" placeholder="gpt-image-1.5" /></label>
+              <label class="creator-remember"><input id="creatorRememberApi" type="checkbox" /><span>使用系统钥匙串加密保存</span></label>
+            </div>
+          </div>
+        </section>
+
+        <p class="creator-notice" id="creatorNotice">请确认你有权使用照片中人物的肖像。任务会在后台生成，完成后发送系统通知。</p>
+        <button class="creator-generate" id="creatorGenerateButton" type="submit">开始后台生成</button>
+        <div class="creator-status hidden" id="creatorStatus" role="status"></div>
       </form>
     </dialog>
 

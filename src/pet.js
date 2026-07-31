@@ -1,15 +1,28 @@
-export const PET_IDS = ["lan", "bo"];
+export const PET_DEFINITIONS = Object.freeze([
+  Object.freeze({ id: "lan", name: "昂昂", image: "./assets/left-pet.png", model: "./assets/3d/hunyuan3d21/lan.glb", hunger: 86, mood: 92, energy: 78 }),
+  Object.freeze({ id: "bo", name: "其其", image: "./assets/right-pet.png", model: "./assets/3d/hunyuan3d21/bo.glb", hunger: 82, mood: 96, energy: 88 }),
+  Object.freeze({ id: "grad", name: "11", image: "./assets/grad-pet.png", model: "./assets/3d/hunyuan3d21/grad.glb", hunger: 88, mood: 90, energy: 84 }),
+  Object.freeze({ id: "white", name: "🤏✌️", image: "./assets/white-shirt-pet.png", model: "./assets/3d/hunyuan3d21/white.glb", hunger: 84, mood: 91, energy: 86 }),
+  Object.freeze({ id: "sunflower", name: "dyson", image: "./assets/left-one-pet.png", model: "./assets/3d/hunyuan3d21/sunflower.glb", hunger: 90, mood: 96, energy: 82 }),
+  Object.freeze({ id: "center", name: "xx", image: "./assets/left-two-pet.png", model: "./assets/3d/hunyuan3d21/center.glb", hunger: 87, mood: 88, energy: 89 }),
+  Object.freeze({ id: "jumper", name: "男🪣", image: "./assets/right-one-pet.png", model: "./assets/3d/hunyuan3d21/jumper.glb", hunger: 83, mood: 95, energy: 96 })
+]);
 
-export const DEFAULT_PETS = Object.freeze({
-  lan: Object.freeze({ name: "阿蓝", hunger: 86, mood: 92, energy: 78 }),
-  bo: Object.freeze({ name: "小博", hunger: 82, mood: 96, energy: 88 })
-});
+export const PET_IDS = Object.freeze(PET_DEFINITIONS.map(({ id }) => id));
+
+export const DEFAULT_PETS = Object.freeze(Object.fromEntries(
+  PET_DEFINITIONS.map(({ id, name, hunger, mood, energy }) => [
+    id,
+    Object.freeze({ name, hunger, mood, energy })
+  ])
+));
 
 const ACTION_EFFECTS = Object.freeze({
   feed: { hunger: 18, mood: 3, energy: 1, bond: 1 },
   play: { hunger: -6, mood: 15, energy: -10, bond: 3 },
   talk: { hunger: -1, mood: 9, energy: -1, bond: 2 },
   sleep: { hunger: -2, mood: 2, energy: 20, bond: 1 },
+  pullOut: { hunger: 0, mood: 4, energy: -1, bond: 1 },
   pet: { hunger: 0, mood: 5, energy: 0, bond: 1 }
 });
 
@@ -19,27 +32,29 @@ export function clamp(value, min = 0, max = 100) {
   return Math.min(max, Math.max(min, number));
 }
 
-export function createInitialState(now = Date.now()) {
+export function createInitialState(now = Date.now(), definitions = PET_DEFINITIONS) {
+  const defaults = definitionsToDefaults(definitions);
+  const ids = Object.keys(defaults);
   return {
-    selectedId: "lan",
+    selectedId: ids[0] || "lan",
     bond: 72,
     createdAt: now,
     lastUpdatedAt: now,
-    pets: {
-      lan: { ...DEFAULT_PETS.lan },
-      bo: { ...DEFAULT_PETS.bo }
-    }
+    pets: Object.fromEntries(ids.map((id) => [id, { ...defaults[id] }])),
+    relationships: createRelationships(ids)
   };
 }
 
-export function normalizeState(candidate, now = Date.now()) {
-  const initial = createInitialState(now);
+export function normalizeState(candidate, now = Date.now(), definitions = PET_DEFINITIONS) {
+  const defaultsById = definitionsToDefaults(definitions);
+  const ids = Object.keys(defaultsById);
+  const initial = createInitialState(now, definitions);
   if (!candidate || typeof candidate !== "object") return initial;
 
   const pets = {};
-  for (const id of PET_IDS) {
+  for (const id of ids) {
     const source = candidate.pets?.[id] || {};
-    const defaults = DEFAULT_PETS[id];
+    const defaults = defaultsById[id];
     pets[id] = {
       name: sanitizeName(source.name, defaults.name),
       hunger: clamp(source.hunger ?? defaults.hunger),
@@ -49,16 +64,17 @@ export function normalizeState(candidate, now = Date.now()) {
   }
 
   return {
-    selectedId: PET_IDS.includes(candidate.selectedId) ? candidate.selectedId : "lan",
+    selectedId: ids.includes(candidate.selectedId) ? candidate.selectedId : initial.selectedId,
     bond: clamp(candidate.bond ?? initial.bond),
     createdAt: finiteTimestamp(candidate.createdAt, now),
     lastUpdatedAt: finiteTimestamp(candidate.lastUpdatedAt, now),
-    pets
+    pets,
+    relationships: createRelationships(ids, candidate.relationships)
   };
 }
 
-export function applyElapsedDecay(input, now = Date.now()) {
-  const state = normalizeState(input, now);
+export function applyElapsedDecay(input, now = Date.now(), definitions = PET_DEFINITIONS) {
+  const state = normalizeState(input, now, definitions);
   const elapsedMinutes = clamp((now - state.lastUpdatedAt) / 60_000, 0, 24 * 60);
   if (elapsedMinutes < 1) return { ...state, lastUpdatedAt: now };
 
@@ -66,7 +82,7 @@ export function applyElapsedDecay(input, now = Date.now()) {
   const energyLoss = elapsedMinutes / 28;
   const pets = {};
 
-  for (const id of PET_IDS) {
+  for (const id of Object.keys(state.pets)) {
     const pet = state.pets[id];
     const nextHunger = clamp(pet.hunger - hungerLoss);
     const nextEnergy = clamp(pet.energy - energyLoss);
@@ -82,9 +98,9 @@ export function applyElapsedDecay(input, now = Date.now()) {
   return { ...state, pets, lastUpdatedAt: now };
 }
 
-export function applyAction(input, petId, action, now = Date.now()) {
-  const state = applyElapsedDecay(input, now);
-  if (!PET_IDS.includes(petId)) throw new Error(`Unknown pet: ${petId}`);
+export function applyAction(input, petId, action, now = Date.now(), definitions = PET_DEFINITIONS) {
+  const state = applyElapsedDecay(input, now, definitions);
+  if (!state.pets[petId]) throw new Error(`Unknown pet: ${petId}`);
   const effect = ACTION_EFFECTS[action];
   if (!effect) throw new Error(`Unknown action: ${action}`);
 
@@ -105,10 +121,10 @@ export function applyAction(input, petId, action, now = Date.now()) {
   };
 }
 
-export function renamePets(input, names, now = Date.now()) {
-  const state = normalizeState(input, now);
+export function renamePets(input, names, now = Date.now(), definitions = PET_DEFINITIONS) {
+  const state = normalizeState(input, now, definitions);
   const pets = { ...state.pets };
-  for (const id of PET_IDS) {
+  for (const id of Object.keys(pets)) {
     pets[id] = {
       ...pets[id],
       name: sanitizeName(names?.[id], pets[id].name)
@@ -126,9 +142,44 @@ export function moodLabel(pet) {
   return "有一点委屈";
 }
 
+export function relationshipKey(firstId, secondId) {
+  return [String(firstId), String(secondId)].sort().join(":");
+}
+
+export function intimacyBetween(state, firstId, secondId) {
+  if (firstId === secondId) return 100;
+  return clamp(state?.relationships?.[relationshipKey(firstId, secondId)] ?? 0);
+}
+
 function sanitizeName(value, fallback) {
   const result = String(value ?? "").trim().slice(0, 8);
   return result || fallback;
+}
+
+function definitionsToDefaults(definitions) {
+  const valid = Array.isArray(definitions) && definitions.length > 0 ? definitions : PET_DEFINITIONS;
+  return Object.fromEntries(valid.map(({ id, name, hunger, mood, energy }) => [
+    id,
+    {
+      name: sanitizeName(name, "新朋友"),
+      hunger: clamp(hunger ?? 85),
+      mood: clamp(mood ?? 90),
+      energy: clamp(energy ?? 85)
+    }
+  ]));
+}
+
+function createRelationships(ids, candidate = {}) {
+  const relationships = {};
+  for (let first = 0; first < ids.length; first += 1) {
+    for (let second = first + 1; second < ids.length; second += 1) {
+      const key = relationshipKey(ids[first], ids[second]);
+      const bothBuiltIn = PET_IDS.includes(ids[first]) && PET_IDS.includes(ids[second]);
+      const fallback = key === relationshipKey("lan", "bo") ? 72 : bothBuiltIn ? 50 : 35;
+      relationships[key] = clamp(candidate?.[key] ?? fallback);
+    }
+  }
+  return relationships;
 }
 
 function finiteTimestamp(value, fallback) {

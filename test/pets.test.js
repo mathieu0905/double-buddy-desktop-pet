@@ -16,12 +16,19 @@ test("desktop app registers seven distinct pets", () => {
   assert.equal(getPetDefinition("sunflower").name, "dyson");
   assert.equal(getPetDefinition("center").name, "xx");
   assert.equal(getPetDefinition("jumper").name, "男🪣");
-  assert.equal(PET_DEFINITIONS.some((pet) => "model" in pet), false);
+  assert.equal(PET_DEFINITIONS.every((pet) => typeof pet.model === "string"), true);
 });
 
 test("every desktop pet has an available image asset", () => {
   for (const pet of PET_DEFINITIONS) {
     const asset = path.join(process.cwd(), "public", pet.image.replace(/^\.\//, ""));
+    assert.equal(existsSync(asset), true, `${pet.id} is missing ${asset}`);
+  }
+});
+
+test("every desktop pet has a Hunyuan3D 2.1 + UniRig model asset", () => {
+  for (const pet of PET_DEFINITIONS) {
+    const asset = path.join(process.cwd(), "public", pet.model.replace(/^\.\//, ""));
     assert.equal(existsSync(asset), true, `${pet.id} is missing ${asset}`);
   }
 });

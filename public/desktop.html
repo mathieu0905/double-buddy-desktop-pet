@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
     <title>桌面宠物</title>
     <link rel="stylesheet" href="./desktop.css" />
   </head>
@@ -12,8 +12,23 @@
       <div class="speech hidden" id="speech"><strong id="speaker"></strong><span id="speechText"></span></div>
       <div class="zzz hidden" id="zzz">Z z</div>
       <div class="pet-hitbox" id="petHitbox">
+        <div class="pet-model" id="petModel" aria-hidden="true"></div>
         <img id="petImage" alt="" draggable="false" />
+        <button class="hide-handle" id="hideHandle" type="button" aria-label="隐藏这个角色" title="隐藏这个角色">−</button>
+        <button class="rotate-handle" id="rotateHandle" type="button" aria-label="拖动旋转角色" title="左右拖动旋转角色">↻</button>
         <button class="resize-handle" id="resizeHandle" type="button" aria-label="拖动调整角色大小" title="拖动调整大小"></button>
+        <nav class="quick-actions" id="quickActions" aria-label="快捷操作">
+          <button type="button" data-pet-action="feed" title="喂饭团"><span>🍙</span>喂食</button>
+          <button type="button" data-pet-action="play" title="陪他玩"><span>🏐</span>玩耍</button>
+          <button type="button" data-pet-action="talk" title="聊聊天"><span>💬</span>聊天</button>
+          <button type="button" data-pet-action="sleep" title="让他休息"><span>☾</span>休息</button>
+          <button type="button" data-quick-panel="motion" title="更多动作"><span>✦</span>动作</button>
+          <button type="button" data-quick-panel="pair" title="双人互动"><span>♡</span>互动</button>
+        </nav>
+        <section class="quick-panel" id="quickPanel" aria-label="更多快捷操作">
+          <header><strong id="quickPanelTitle">动作</strong><button type="button" id="closeQuickPanel" aria-label="关闭">×</button></header>
+          <div class="quick-panel-grid" id="quickPanelGrid"></div>
+        </section>
         <div class="floor-shadow"></div>
         <div class="name-tag"><i></i><strong id="petName"></strong><small id="moodText">心情超好</small></div>
         <div class="quick-stats" id="quickStats">

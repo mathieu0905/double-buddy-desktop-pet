@@ -4,6 +4,8 @@ node_modules/
 .playwright-mcp/
 .DS_Store
 npm-debug.log*
+**/.godot/
+tools/*.tar.gz
 
 # packaged applications are published through GitHub Releases
 release/
