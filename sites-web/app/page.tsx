@@ -105,6 +105,7 @@ export default function Home() {
         <nav aria-label="页面导航">
           <a href="#pets">认识他们</a>
           <a href="#care">在线陪伴</a>
+          <a className="github-link" href="https://github.com/mathieu0905/double-buddy-desktop-pet" target="_blank" rel="noreferrer" aria-label="在 GitHub 查看一起摸鱼项目">GitHub ↗</a>
           <a className="nav-pill" href="#desktop">桌面版</a>
         </nav>
       </header>
@@ -196,6 +197,7 @@ export default function Home() {
           <div className="feature-list">
             <span>透明桌面悬浮</span><span>两只独立移动</span><span>右键快捷互动</span><span>自动保存状态</span>
           </div>
+          <a className="github-cta" href="https://github.com/mathieu0905/double-buddy-desktop-pet" target="_blank" rel="noreferrer">前往 GitHub 下载与查看源码 <span>↗</span></a>
         </div>
         <div className="desktop-preview">
           <div className="fake-menubar"><i /><i /><i /><span>你的桌面</span></div>
@@ -209,7 +211,7 @@ export default function Home() {
       <footer>
         <div className="brand"><span className="brand-mark"><i /><i /></span><strong>一起摸鱼</strong></div>
         <p>由一张真实合照，长成两个会陪伴你的角色。</p>
-        <a href="#home">回到顶部 ↑</a>
+        <div className="footer-links"><a href="https://github.com/mathieu0905/double-buddy-desktop-pet" target="_blank" rel="noreferrer">GitHub ↗</a><a href="#home">回到顶部 ↑</a></div>
       </footer>
     </main>
   );
