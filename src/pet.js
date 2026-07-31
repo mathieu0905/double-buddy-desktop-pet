@@ -1,11 +1,11 @@
 export const PET_DEFINITIONS = Object.freeze([
-  Object.freeze({ id: "lan", name: "昂昂", image: "./assets/left-pet.png", model: "./assets/3d/hunyuan3d21/lan.glb", hunger: 86, mood: 92, energy: 78 }),
-  Object.freeze({ id: "bo", name: "其其", image: "./assets/right-pet.png", model: "./assets/3d/hunyuan3d21/bo.glb", hunger: 82, mood: 96, energy: 88 }),
-  Object.freeze({ id: "grad", name: "11", image: "./assets/grad-pet.png", model: "./assets/3d/hunyuan3d21/grad.glb", hunger: 88, mood: 90, energy: 84 }),
-  Object.freeze({ id: "white", name: "🤏✌️", image: "./assets/white-shirt-pet.png", model: "./assets/3d/hunyuan3d21/white.glb", hunger: 84, mood: 91, energy: 86 }),
-  Object.freeze({ id: "sunflower", name: "dyson", image: "./assets/left-one-pet.png", model: "./assets/3d/hunyuan3d21/sunflower.glb", hunger: 90, mood: 96, energy: 82 }),
-  Object.freeze({ id: "center", name: "xx", image: "./assets/left-two-pet.png", model: "./assets/3d/hunyuan3d21/center.glb", hunger: 87, mood: 88, energy: 89 }),
-  Object.freeze({ id: "jumper", name: "男🪣", image: "./assets/right-one-pet.png", model: "./assets/3d/hunyuan3d21/jumper.glb", hunger: 83, mood: 95, energy: 96 })
+  Object.freeze({ id: "lan", name: "昂昂", image: "./assets/left-pet.png", model: "./assets/3d/hunyuan3d21/repaired/lan.glb", hunger: 86, mood: 92, energy: 78 }),
+  Object.freeze({ id: "bo", name: "其其", image: "./assets/right-pet.png", model: "./assets/3d/hunyuan3d21/repaired/bo.glb", hunger: 82, mood: 96, energy: 88 }),
+  Object.freeze({ id: "grad", name: "11", image: "./assets/grad-pet.png", model: "./assets/3d/hunyuan3d21/repaired/grad.glb", hunger: 88, mood: 90, energy: 84 }),
+  Object.freeze({ id: "white", name: "🤏✌️", image: "./assets/white-shirt-pet.png", model: "./assets/3d/hunyuan3d21/repaired/white.glb", hunger: 84, mood: 91, energy: 86 }),
+  Object.freeze({ id: "sunflower", name: "dyson", image: "./assets/left-one-pet.png", model: "./assets/3d/hunyuan3d21/repaired/sunflower.glb", hunger: 90, mood: 96, energy: 82 }),
+  Object.freeze({ id: "center", name: "xx", image: "./assets/left-two-pet.png", model: "./assets/3d/hunyuan3d21/repaired/center.glb", hunger: 87, mood: 88, energy: 89 }),
+  Object.freeze({ id: "jumper", name: "男🪣", image: "./assets/right-one-pet.png", model: "./assets/3d/hunyuan3d21/repaired/jumper.glb", hunger: 83, mood: 95, energy: 96 })
 ]);
 
 export const PET_IDS = Object.freeze(PET_DEFINITIONS.map(({ id }) => id));
