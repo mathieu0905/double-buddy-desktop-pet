@@ -1,0 +1,61 @@
+name: Release macOS app
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build, for example v1.0.1"
+        required: true
+        default: "v1.0.1"
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-14
+    timeout-minutes: 30
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+    steps:
+      - name: Check out release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build macOS app
+        run: npm run package:mac
+
+      - name: Create ZIP
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            "release/一起摸鱼-darwin-arm64" \
+            "release/一起摸鱼-mac-arm64.zip"
+
+      - name: Publish to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" \
+              "release/一起摸鱼-mac-arm64.zip" \
+              --clobber
+          else
+            gh release create "$RELEASE_TAG" \
+              "release/一起摸鱼-mac-arm64.zip" \
+              --title "一起摸鱼 $RELEASE_TAG" \
+              --generate-notes
+          fi
