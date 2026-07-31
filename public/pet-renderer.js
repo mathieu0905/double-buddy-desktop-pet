@@ -32717,7 +32717,7 @@ function createPetRenderer({ container, modelUrl, rotation = 0, onReady, onError
     baseRootX = modelRoot.position.x;
     baseRootY = modelRoot.position.y;
     modelRoot.rotation.y = facingRotation + MathUtils.degToRad(viewRotation);
-    rig = createProceduralRig(model);
+    rig = createProceduralRig(model, modelUrl);
     ready = true;
     resize();
     play("idle", { immediate: true });
@@ -32951,7 +32951,7 @@ function alignModelToSkeleton(model) {
   model.updateMatrixWorld(true);
   return correction.angleTo(new Quaternion());
 }
-function createProceduralRig(model) {
+function createProceduralRig(model, modelUrl = "") {
   let skeleton;
   model.traverse((node) => {
     if (!skeleton && node.isSkinnedMesh) skeleton = node.skeleton;
@@ -32986,15 +32986,17 @@ function createProceduralRig(model) {
   const euler = new Euler();
   const offset = new Quaternion();
   for (const branch of arms) {
+    const root = branch[0];
+    const end = branch[branch.length - 1];
     const side = Math.sign(branchX(branch, world) - world.get(chest).x) || 1;
-    for (const [index, angle] of [[0, 0.48], [1, -0.16], [2, -0.08]]) {
-      const bone = branch[index];
-      const pose = bone && base.get(bone);
-      if (!pose) continue;
-      euler.set(0, 0, side * angle, "XYZ");
-      offset.setFromEuler(euler);
-      pose.quaternion.multiply(offset);
-    }
+    const rootPoint = world.get(root);
+    const currentVector = world.get(end).clone().sub(rootPoint);
+    const outward = modelUrl.includes("/white.") ? 0.22 : modelUrl.includes("/lan.") ? 0.16 : 0.1;
+    const targetVector = currentVector.clone().add(new Vector3(side * outward, 0, 0.05));
+    const worldDelta = new Quaternion().setFromUnitVectors(currentVector.normalize(), targetVector.normalize());
+    const parentWorld = root.parent?.getWorldQuaternion(new Quaternion()) || new Quaternion();
+    const localDelta = parentWorld.clone().invert().multiply(worldDelta).multiply(parentWorld);
+    base.get(root).quaternion.premultiply(localDelta);
   }
   function reset() {
     for (const bone of bones) {
