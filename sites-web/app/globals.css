@@ -77,7 +77,12 @@ button:focus-visible, a:focus-visible { outline: 3px solid rgba(76, 115, 143, 0.
 .portrait-stage::before { width: 210px; height: 210px; left: -82px; top: 62px; }
 .portrait-stage::after { width: 170px; height: 230px; right: -70px; top: 22px; background: rgba(101, 138, 159, .1); }
 .stage-orbit { position: absolute; width: 480px; height: 480px; left: 50%; top: 54%; border: 1px solid rgba(86, 118, 96, .14); border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 55px rgba(255,255,255,.06), 0 0 0 110px rgba(255,255,255,.05); }
-.hero-pet { position: absolute; bottom: 47px; height: 435px; width: auto; object-fit: contain; filter: drop-shadow(0 18px 11px rgba(54, 73, 62, .13)); transition: 250ms ease; }
+.pet-model { position: relative; width: 100%; height: 100%; }
+.pet-model-canvas { position: absolute; inset: 0; z-index: 2; }
+.pet-model-canvas canvas { width: 100% !important; height: 100% !important; display: block; }
+.pet-model > img { width: auto; height: 88%; position: absolute; z-index: 1; left: 50%; bottom: 2%; object-fit: contain; transform: translateX(-50%); filter: drop-shadow(0 18px 11px rgba(54, 73, 62, .13)); }
+.pet-model.model-ready > img { opacity: 0; }
+.hero-pet { position: absolute; bottom: 47px; width: 230px; height: 435px; object-fit: contain; filter: drop-shadow(0 18px 11px rgba(54, 73, 62, .13)); transition: 250ms ease; }
 .hero-lan { left: 52px; }
 .hero-bo { right: 39px; height: 423px; }
 .portrait-stage:hover .hero-lan { transform: translateY(-7px) rotate(-1deg); }
@@ -97,6 +102,17 @@ button:focus-visible, a:focus-visible { outline: 3px solid rgba(76, 115, 143, 0.
 .story-strip div { display: flex; align-items: center; justify-content: center; gap: 19px; font-size: 13px; }
 .story-strip b { color: #a9b2ac; font-size: 11px; }
 .story-strip strong { color: var(--sage-dark); }
+
+.roster { width: min(1180px, calc(100% - 44px)); padding: 92px 0 110px; margin: 0 auto; }
+.roster-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; }
+.roster-card { min-width: 0; height: 210px; padding: 10px 8px 8px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,.86); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; color: var(--ink); background: linear-gradient(155deg, #e6efe4, #e6edef); box-shadow: 0 14px 30px rgba(48,68,56,.09); cursor: pointer; transition: 180ms ease; }
+.roster-card:nth-child(2n) { background: linear-gradient(155deg, #e7edef, #e7eee7); }
+.roster-card:hover { transform: translateY(-5px); box-shadow: 0 20px 36px rgba(48,68,56,.15); }
+.roster-card .pet-model { width: 100%; height: 165px; position: absolute; top: 0; left: 0; }
+.roster-card .pet-model > img { height: 94%; }
+.roster-card > span { min-width: 90px; max-width: 100%; height: 30px; padding: 0 8px; position: relative; z-index: 3; border: 1px solid rgba(255,255,255,.9); border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 5px; background: rgba(250,250,246,.9); box-shadow: 0 5px 14px rgba(51,72,60,.1); font-size: 10px; font-weight: 850; white-space: nowrap; }
+.roster-card > span i { width: 5px; height: 5px; border-radius: 50%; background: #79aa7d; }
+.roster-card > span small { color: #819087; font-size: 7px; font-weight: 650; }
 
 .playground { width: min(1120px, calc(100% - 44px)); padding: 105px 0 120px; margin: 0 auto; }
 .section-heading { max-width: 620px; margin: 0 auto 44px; text-align: center; }
@@ -186,6 +202,7 @@ footer a { color: var(--sage-dark); font-weight: 800; }
   .lead { margin-left: auto; margin-right: auto; }
   .hero-actions { justify-content: center; }
   .portrait-stage { width: min(690px, 100%); margin: 20px auto 0; }
+  .roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .pet-console { grid-template-columns: 1fr; }
   .console-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
   .panel-top { grid-column: 1/-1; }
@@ -204,6 +221,7 @@ footer a { color: var(--sage-dark); font-weight: 800; }
   .lead { font-size: 14px; }
   .portrait-stage { height: 420px; border-radius: 34px 34px 90px 34px; }
   .hero-pet { height: 315px; bottom: 50px; }
+  .hero-pet { width: 180px; }
   .hero-bo { height: 307px; right: -4px; }
   .hero-lan { left: 0; }
   .stage-label { min-width: 120px; bottom: 25px; }
@@ -212,6 +230,9 @@ footer a { color: var(--sage-dark); font-weight: 800; }
   .bond-seal { top: 105px; width: 60px; height: 60px; }
   .story-strip div { flex-wrap: wrap; gap: 9px 12px; }
   .playground { width: calc(100% - 24px); padding: 75px 0; }
+  .roster { width: calc(100% - 24px); padding: 68px 0 75px; }
+  .roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .roster-card { height: 190px; }
   .console-scene { min-height: 415px; }
   .console-pet { height: 320px; bottom: 20px; }
   .console-pet > img { height: 255px; }

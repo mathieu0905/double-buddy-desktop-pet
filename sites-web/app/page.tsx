@@ -1,21 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-type PetId = "lan" | "bo";
+type PetId = "lan" | "bo" | "grad" | "white" | "sunflower" | "center" | "jumper";
 type Pet = { name: string; hunger: number; mood: number; energy: number };
+type PetDefinition = Pet & { id: PetId; image: string; model: string };
 type State = { selected: PetId; bond: number; pets: Record<PetId, Pet> };
+
+const PETS: PetDefinition[] = [
+  { id: "lan", name: "昂昂", image: "/assets/left-pet.png", model: "/assets/3d/hunyuan3d21/repaired/lan.glb", hunger: 86, mood: 92, energy: 78 },
+  { id: "bo", name: "其其", image: "/assets/right-pet.png", model: "/assets/3d/hunyuan3d21/repaired/bo.glb", hunger: 82, mood: 96, energy: 88 },
+  { id: "grad", name: "11", image: "/assets/grad-pet.png", model: "/assets/3d/hunyuan3d21/repaired/grad.glb", hunger: 88, mood: 90, energy: 84 },
+  { id: "white", name: "🤏✌️", image: "/assets/white-shirt-pet.png", model: "/assets/3d/hunyuan3d21/repaired/white.glb", hunger: 84, mood: 91, energy: 86 },
+  { id: "sunflower", name: "dyson", image: "/assets/left-one-pet.png", model: "/assets/3d/hunyuan3d21/repaired/sunflower.glb", hunger: 90, mood: 96, energy: 82 },
+  { id: "center", name: "xx", image: "/assets/left-two-pet.png", model: "/assets/3d/hunyuan3d21/repaired/center.glb", hunger: 87, mood: 88, energy: 89 },
+  { id: "jumper", name: "男🪣", image: "/assets/right-one-pet.png", model: "/assets/3d/hunyuan3d21/repaired/jumper.glb", hunger: 83, mood: 95, energy: 96 },
+];
 
 const initialState: State = {
   selected: "lan",
   bond: 72,
-  pets: {
-    lan: { name: "阿蓝", hunger: 86, mood: 92, energy: 78 },
-    bo: { name: "小博", hunger: 82, mood: 96, energy: 88 },
-  },
+  pets: Object.fromEntries(PETS.map(({ id, name, hunger, mood, energy }) => [id, { name, hunger, mood, energy }])) as Record<PetId, Pet>,
 };
 
-const speeches: Record<PetId, Record<string, string[]>> = {
+const speeches: Partial<Record<PetId, Record<string, string[]>>> = {
   lan: {
     tap: ["再摸一下也不是不行。", "好耶，充电成功。"],
     feed: ["吃饱了，才有力气摸鱼。", "这个饭团很有眼光。"],
@@ -42,6 +50,39 @@ const effects = {
 
 const clamp = (value: number) => Math.max(0, Math.min(100, value));
 
+function PetModel({ pet, className = "" }: { pet: PetDefinition; className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let renderer: { destroy: () => void } | undefined;
+    let cancelled = false;
+    const loadRenderer = new Function("return import('/pet-renderer.js')") as () => Promise<{
+      createPetRenderer: (options: { container: HTMLElement; modelUrl: string; onReady?: () => void; onError?: () => void }) => { destroy: () => void };
+    }>;
+    loadRenderer().then(({ createPetRenderer }) => {
+      if (cancelled || !containerRef.current) return;
+      renderer = createPetRenderer({
+        container: containerRef.current,
+        modelUrl: pet.model,
+        onReady: () => setReady(true),
+        onError: () => setReady(false),
+      });
+    }).catch(() => setReady(false));
+    return () => {
+      cancelled = true;
+      renderer?.destroy();
+    };
+  }, [pet.model]);
+
+  return (
+    <div className={`pet-model ${ready ? "model-ready" : ""} ${className}`}>
+      <div className="pet-model-canvas" ref={containerRef} />
+      <img src={pet.image} alt="" aria-hidden="true" />
+    </div>
+  );
+}
+
 export default function Home() {
   const [state, setState] = useState<State>(initialState);
   const [speech, setSpeech] = useState({ pet: "lan" as PetId, text: "今天也一起摸鱼吧。" });
@@ -51,7 +92,14 @@ export default function Home() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem("double-buddy.sites.v1");
-      if (saved) setState(JSON.parse(saved) as State);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<State>;
+        setState({
+          ...initialState,
+          ...parsed,
+          pets: { ...initialState.pets, ...(parsed.pets ?? {}) },
+        });
+      }
     } catch {}
     setReady(true);
   }, []);
@@ -88,7 +136,7 @@ export default function Home() {
         },
       };
     });
-    const options = speeches[petId][action];
+    const options = speeches[petId]?.[action] ?? speeches.lan?.[action] ?? ["今天也一起摸鱼吧。"];
     setSpeech({ pet: petId, text: options[Math.floor(Math.random() * options.length)] });
     setMotion({ pet: petId, action });
     window.setTimeout(() => setMotion({ pet: "", action: "" }), action === "rest" ? 2600 : 650);
@@ -114,7 +162,7 @@ export default function Home() {
         <div className="hero-copy">
           <p className="eyebrow">TWO FRIENDS · ONE LITTLE DESKTOP</p>
           <h1>把我们的合照，<br /><em>变成每天见面的桌宠。</em></h1>
-          <p className="lead">阿蓝和小博住进了这个小世界。点一点、喂个饭团、陪他们打一球——今天也有人陪你一起摸鱼。</p>
+          <p className="lead">七位角色住进了这个小世界。点一点、喂个饭团、陪他们打一球——今天也有人陪你一起摸鱼。</p>
           <div className="hero-actions">
             <a className="primary" href="#care">现在去陪他们</a>
             <a className="secondary" href="#desktop">了解电脑桌宠版 <span>↗</span></a>
@@ -122,26 +170,42 @@ export default function Home() {
           <div className="trust-row"><span>♥</span> 状态只保存在你的浏览器 · 无需登录</div>
         </div>
 
-        <div className="portrait-stage" aria-label="阿蓝和小博的桌宠合照">
+        <div className="portrait-stage" aria-label="七位桌宠角色">
           <div className="stage-orbit" />
-          <img className="hero-pet hero-lan" src="/assets/left-pet.png" alt="穿花衬衫的桌宠阿蓝" />
-          <img className="hero-pet hero-bo" src="/assets/right-pet.png" alt="穿毕业袍的桌宠小博" />
-          <div className="stage-label label-lan"><i />阿蓝 <small>温柔派</small></div>
-          <div className="stage-label label-bo"><i />小博 <small>元气派</small></div>
+          <PetModel pet={PETS[0]} className="hero-pet hero-lan" />
+          <PetModel pet={PETS[1]} className="hero-pet hero-bo" />
+          <div className="stage-label label-lan"><i />{PETS[0].name} <small>温柔派</small></div>
+          <div className="stage-label label-bo"><i />{PETS[1].name} <small>元气派</small></div>
           <div className="bond-seal"><span>♥</span><strong>{Math.round(state.bond)}</strong><small>默契</small></div>
         </div>
       </section>
 
       <section className="story-strip" id="pets">
         <p>从球场边的一张合照开始</p>
-        <div><span>花衬衫与挎包</span><b>×</b><span>毕业袍与笑容</span><b>=</b><strong>两只独一无二的桌宠</strong></div>
+        <div><span>花衬衫与挎包</span><b>×</b><span>毕业袍与笑容</span><b>+</b><strong>另外五位独一无二的角色</strong></div>
+      </section>
+
+      <section className="roster" aria-labelledby="roster-title">
+        <div className="section-heading">
+          <p className="eyebrow">SEVEN LITTLE FRIENDS</p>
+          <h2 id="roster-title">七位角色，全部在这里。</h2>
+          <p>每一位都有自己的 3D 模型、状态和动作。点选角色，就能把他带进陪伴区。</p>
+        </div>
+        <div className="roster-grid">
+          {PETS.map((pet) => (
+            <button key={pet.id} className="roster-card" onClick={() => interact(pet.id, "tap")} aria-label={`选择${pet.name}`}>
+              <PetModel pet={pet} />
+              <span><i />{pet.name}<small>{state.pets[pet.id].mood > 87 ? "心情超好" : "悠闲自在"}</small></span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="playground" id="care">
         <div className="section-heading">
           <p className="eyebrow">LIVE COMPANION</p>
           <h2>现在，轮到你照顾他们了。</h2>
-          <p>两只桌宠有独立的状态。选中一位，再决定今天一起做什么。</p>
+          <p>七位桌宠都有独立状态。选中一位，再决定今天一起做什么。</p>
         </div>
 
         <div className="pet-console">
